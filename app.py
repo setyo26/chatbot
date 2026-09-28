@@ -18,7 +18,14 @@ st.markdown("""
 /* ── Reset default Streamlit UI ── */
 #MainMenu, footer, header,
 [data-testid="stToolbar"]          { display: none !important; }
-[data-testid="collapsedControl"]   { display: none !important; }
+
+/* Style the sidebar toggle button to be visible & on-brand */
+[data-testid="collapsedControl"] {
+    color: #8B5CF6 !important;
+    background: white !important;
+    border-radius: 0 8px 8px 0 !important;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.08) !important;
+}
 
 /* ── Page background ── */
 .stApp { background: #F0F2F5 !important; }
