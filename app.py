@@ -1,7 +1,6 @@
 import streamlit as st
 import google.generativeai as genai
 import os
-import time
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,30 +12,31 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ── GLOBAL CSS ──────────────────────────────────────────────────────────────
+# ── GLOBAL CSS ───────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-/* Reset & Base */
+/* Hide default Streamlit chrome */
 #MainMenu, footer, header, [data-testid="stToolbar"],
 [data-testid="collapsedControl"] { visibility: hidden !important; display: none !important; }
 
 .block-container { padding: 0 !important; max-width: 100% !important; }
 .stApp { background: #F4F5F7 !important; }
 
-/* ── LEFT SIDEBAR ── */
+/* ── LEFT PANEL ── */
 .sidebar-wrapper {
     background: #FFFFFF;
     height: 100vh;
-    padding: 20px 14px;
+    padding: 20px 14px 14px;
     border-right: 1px solid #EBEBEB;
     display: flex;
     flex-direction: column;
     position: sticky;
     top: 0;
+    overflow-y: auto;
 }
 .brand-logo {
     display: flex; align-items: center; gap: 10px;
-    margin-bottom: 22px;
+    margin-bottom: 18px;
 }
 .brand-icon {
     background: linear-gradient(135deg, #8B5CF6, #3B82F6);
@@ -45,54 +45,67 @@ st.markdown("""
     display: flex; align-items: center; justify-content: center;
 }
 .brand-name { font-size: 1.2rem; font-weight: 700; color: #1A1A2E; }
-
 .search-box {
     background: #F4F5F7; border-radius: 8px;
-    padding: 9px 14px; margin-bottom: 18px;
+    padding: 9px 14px; margin-bottom: 14px;
     font-size: 0.85rem; color: #999;
     border: 1px solid #E5E7EB;
 }
-.nav-section { margin-bottom: 18px; }
-.nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 12px; border-radius: 8px;
-    font-size: 0.9rem; color: #444; cursor: pointer;
-    margin-bottom: 4px; font-weight: 500;
+.nav-label {
+    font-size: 0.72rem; color: #AAA; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .06em;
+    margin: 10px 0 4px 4px;
 }
-.nav-item:hover, .nav-item.active {
-    background: #F0EBFF; color: #7C3AED;
-}
-.nav-item .badge {
-    margin-left: auto; background: #EDE9FE;
-    color: #7C3AED; font-size: 0.7rem;
-    padding: 2px 8px; border-radius: 20px; font-weight: 600;
-}
-.nav-label { font-size: 0.72rem; color: #AAA; font-weight: 600;
-    text-transform: uppercase; letter-spacing: .05em;
-    margin: 14px 0 6px 12px; }
 .pinned-item {
-    padding: 7px 12px; font-size: 0.82rem; color: #555;
+    padding: 7px 10px; font-size: 0.82rem; color: #555;
     border-radius: 6px; cursor: pointer;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .pinned-item:hover { background: #F9FAFB; }
 
-.new-chat-btn {
-    margin-top: auto;
-    background: linear-gradient(135deg, #8B5CF6, #3B82F6);
-    color: white; border: none; border-radius: 10px;
-    padding: 12px; font-weight: 700; font-size: 0.9rem;
-    width: 100%; cursor: pointer; text-align: center;
+/* ── NAV BUTTONS (override Streamlit button) ── */
+div[data-testid="stVerticalBlock"] .stButton > button {
+    background: transparent !important;
+    color: #444 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    text-align: left !important;
+    font-weight: 500 !important;
+    font-size: 0.88rem !important;
+    padding: 8px 12px !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    transition: background .15s;
+}
+div[data-testid="stVerticalBlock"] .stButton > button:hover {
+    background: #F0EBFF !important;
+    color: #7C3AED !important;
 }
 
-/* ── RIGHT MAIN PANEL ── */
-.main-wrapper {
-    padding: 28px 36px;
-    height: 100vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
+/* Active nav button */
+.nav-active > div > button {
+    background: #F0EBFF !important;
+    color: #7C3AED !important;
+    font-weight: 700 !important;
 }
+
+/* New Chat / Start Chat buttons */
+.btn-primary > div > button {
+    background: linear-gradient(135deg, #8B5CF6, #3B82F6) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    padding: 12px !important;
+    font-size: 0.9rem !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(139,92,246,0.35) !important;
+}
+.btn-primary > div > button:hover {
+    opacity: 0.9 !important;
+}
+
+/* ── RIGHT / MAIN PANEL ── */
+.main-wrapper { padding: 28px 36px; }
 .topbar {
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 22px;
@@ -102,34 +115,29 @@ st.markdown("""
     background: white; border-radius: 8px; border: 1px solid #E5E7EB;
     padding: 9px 16px; font-size: 0.85rem; color: #888; width: 240px;
 }
-.btn-new {
-    background: linear-gradient(135deg, #8B5CF6, #3B82F6);
-    color: white; border: none; border-radius: 8px;
-    padding: 9px 18px; font-weight: 700; font-size: 0.85rem; cursor: pointer;
-}
 
 /* ── HERO BANNER ── */
 .hero-banner {
     background: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
-    border-radius: 18px; padding: 40px 24px; text-align: center;
-    color: white; margin-bottom: 28px;
-    box-shadow: 0 8px 24px rgba(139,92,246,0.3);
+    border-radius: 18px; padding: 38px 24px; text-align: center;
+    color: white; margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(139,92,246,0.28);
     position: relative; overflow: hidden;
 }
 .hero-banner::before {
-    content: ''; position: absolute; top: -40px; right: -40px;
-    width: 160px; height: 160px; border-radius: 50%;
+    content: ''; position: absolute; top: -50px; right: -50px;
+    width: 180px; height: 180px; border-radius: 50%;
     background: rgba(255,255,255,0.08);
 }
 .hero-banner::after {
-    content: ''; position: absolute; bottom: -60px; left: -20px;
-    width: 200px; height: 200px; border-radius: 50%;
+    content: ''; position: absolute; bottom: -70px; left: -30px;
+    width: 220px; height: 220px; border-radius: 50%;
     background: rgba(255,255,255,0.06);
 }
 .hero-title { font-size: 1.9rem; font-weight: 800; margin: 0 0 8px; }
 .hero-sub { font-size: 1rem; opacity: .85; margin: 0; }
 
-/* ── CHAT MESSAGES ── */
+/* ── MESSAGE CARDS ── */
 .chat-section-title {
     font-size: 1rem; font-weight: 700; color: #1A1A2E;
     margin: 0 0 14px;
@@ -146,38 +154,14 @@ st.markdown("""
 }
 .msg-avatar.user { background: #DBEAFE; }
 .msg-body { flex: 1; min-width: 0; }
-.msg-header { display: flex; justify-content: space-between;
-    align-items: center; margin-bottom: 4px; }
-.msg-name { font-weight: 700; font-size: 0.85rem; color: #1A1A2E; }
-.msg-time { font-size: 0.75rem; color: #AAA; }
-.msg-text { font-size: 0.88rem; color: #555; line-height: 1.55; }
-.msg-footer { display: flex; gap: 14px; margin-top: 8px; align-items: center; }
-.msg-meta { font-size: 0.74rem; color: #AAA; }
+.msg-name { font-weight: 700; font-size: 0.85rem; color: #1A1A2E; margin-bottom: 4px; }
+.msg-text { font-size: 0.88rem; color: #555; line-height: 1.6; }
 
-/* Typing indicator */
-.typing { display: inline-flex; gap: 4px; padding: 6px 0; }
-.typing span {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: #8B5CF6; animation: bounce 1s infinite;
-}
-.typing span:nth-child(2) { animation-delay: .2s; }
-.typing span:nth-child(3) { animation-delay: .4s; }
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-}
-
-/* ── INPUT AREA ── */
-.input-area {
-    position: sticky; bottom: 0; background: #F4F5F7;
-    padding: 14px 0 0;
-}
-
-/* Streamlit default chat input override */
+/* ── CHAT INPUT ── */
 .stChatInputContainer {
     border-radius: 12px !important;
     border: 2px solid #E5E7EB !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.07) !important;
     background: white !important;
 }
 .stChatInputContainer:focus-within {
@@ -187,10 +171,18 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── API KEY SETUP ────────────────────────────────────────────────────────────
+# ── STATE INIT ───────────────────────────────────────────────────────────────
+if "active_menu" not in st.session_state:
+    st.session_state.active_menu = "Chats"
+if "messages" not in st.session_state:
+    st.session_state.messages = [{
+        "role": "assistant",
+        "content": "Halo! Saya **Bima**, asisten wisata dan kuliner Indonesia Anda. Ada yang ingin ditanyakan hari ini? 🏝️"
+    }]
+
+# ── API & MODEL ──────────────────────────────────────────────────────────────
 api_key = os.getenv("GEMINI_API_KEY")
 
-# ── MODEL SETUP ─────────────────────────────────────────────────────────────
 system_instruction = (
     "Kamu adalah AI Asisten pintar bernama Bima. "
     "Tugas utamamu adalah memandu perjalanan wisata dan memberikan rekomendasi kuliner Indonesia. "
@@ -210,61 +202,94 @@ def get_model(key):
         system_instruction=system_instruction
     )
 
-# ── CHAT HISTORY ─────────────────────────────────────────────────────────────
-if "messages" not in st.session_state:
-    st.session_state.messages = [{
-        "role": "assistant",
-        "content": "Halo! Saya siap membantu Anda merencanakan perjalanan atau mencari referensi kuliner di Indonesia. Ada yang ingin ditanyakan hari ini?"
-    }]
-
 # ── 2-COLUMN LAYOUT ──────────────────────────────────────────────────────────
 col_left, col_right = st.columns([1, 3.5])
 
-# ──────────────────── LEFT SIDEBAR ──────────────────────────────────────────
+# ─────────────────────────── LEFT SIDEBAR ────────────────────────────────────
 with col_left:
+    # Brand
     st.markdown("""
-    <div class="sidebar-wrapper">
-        <div class="brand-logo">
-            <div class="brand-icon">N</div>
-            <div class="brand-name">Nusantara AI</div>
-        </div>
-        <div class="search-box">🔍&nbsp; Search for chats...</div>
-        <div class="nav-section">
-            <div class="nav-item active">💬 Chats <span class="badge">3</span></div>
-            <div class="nav-item">📚 Library <span class="badge">2</span></div>
-            <div class="nav-item">🧩 Apps <span class="badge">5</span></div>
-        </div>
-        <div class="nav-label">Pinned</div>
-        <div class="pinned-item">🗺️ Rekomendasi Wisata Lombok...</div>
-        <div class="pinned-item">🍜 Kuliner terbaik di Jogja...</div>
-        <div class="pinned-item">🏖️ Itinerary 5 hari Bali...</div>
-        <div class="nav-label">Chat History</div>
-        <div class="pinned-item">Hidden gems di Raja Ampat...</div>
-        <div class="pinned-item">Makanan khas Padang...</div>
-        <div class="pinned-item">Tempat camping Dieng...</div>
+    <div class="brand-logo">
+        <div class="brand-icon">N</div>
+        <div class="brand-name">Nusantara AI</div>
     </div>
+    <div class="search-box">🔍&nbsp; Search for chats...</div>
     """, unsafe_allow_html=True)
-    
+
+    # --- Navigation Menu (Real Streamlit Buttons) ---
+    menu_items = [
+        ("💬", "Chats", "3"),
+        ("📚", "Library", "2"),
+        ("🧩", "Apps", "5"),
+    ]
+    for icon, label, badge in menu_items:
+        is_active = st.session_state.active_menu == label
+        # Wrap with active class if needed
+        if is_active:
+            st.markdown('<div class="nav-active">', unsafe_allow_html=True)
+        if st.button(f"{icon}  {label}  •{badge}", key=f"menu_{label}", use_container_width=True):
+            st.session_state.active_menu = label
+            st.rerun()
+        if is_active:
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- Pinned ---
+    st.markdown('<div class="nav-label">Pinned</div>', unsafe_allow_html=True)
+    pinned = [
+        ("🗺️", "Wisata Lombok terbaik..."),
+        ("🍜", "Kuliner terbaik di Jogja..."),
+        ("🏖️", "Itinerary 5 hari Bali..."),
+    ]
+    for icon, text in pinned:
+        if st.button(f"{icon}  {text}", key=f"pin_{text}", use_container_width=True):
+            st.session_state.messages = [{
+                "role": "assistant",
+                "content": f"Halo! Kamu ingin tahu lebih lanjut soal **{text.replace('...', '')}**? Yuk ceritakan lebih detail apa yang kamu cari! 😊"
+            }]
+            st.session_state.active_menu = "Chats"
+            st.rerun()
+
+    # --- History ---
+    st.markdown('<div class="nav-label">Chat History</div>', unsafe_allow_html=True)
+    history_items = [
+        ("💬", "Hidden gems Raja Ampat..."),
+        ("💬", "Makanan khas Padang..."),
+        ("💬", "Camping di Dieng..."),
+    ]
+    for icon, text in history_items:
+        if st.button(f"{icon}  {text}", key=f"hist_{text}", use_container_width=True):
+            st.session_state.messages = [{
+                "role": "assistant",
+                "content": f"Halo! Melanjutkan percakapan soal **{text.replace('...', '')}**. Ada yang ingin kamu tanyakan? 😊"
+            }]
+            st.session_state.active_menu = "Chats"
+            st.rerun()
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
     # New Chat Button
-    if st.button("＋  Start New Chat", use_container_width=True):
+    st.markdown('<div class="btn-primary">', unsafe_allow_html=True)
+    if st.button("＋  Start New Chat", key="new_chat", use_container_width=True):
         st.session_state.messages = [{
             "role": "assistant",
-            "content": "Halo! Saya siap membantu Anda merencanakan perjalanan atau mencari referensi kuliner di Indonesia. Ada yang ingin ditanyakan hari ini?"
+            "content": "Halo! Saya **Bima**, asisten wisata dan kuliner Indonesia Anda. Ada yang ingin ditanyakan hari ini? 🏝️"
         }]
+        st.session_state.active_menu = "Chats"
         st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# ──────────────────── RIGHT MAIN PANEL ──────────────────────────────────────
+# ─────────────────────────── RIGHT PANEL ─────────────────────────────────────
 with col_right:
+    st.markdown('<div class="main-wrapper">', unsafe_allow_html=True)
+
     # Top Bar
-    st.markdown("""
+    st.markdown(f"""
     <div class="topbar">
-        <div class="topbar-title">Chats</div>
-        <div style="display:flex; gap:10px; align-items:center;">
-            <div class="topbar-search">🔍&nbsp; Search for chats...</div>
-        </div>
+        <div class="topbar-title">{st.session_state.active_menu}</div>
+        <div class="topbar-search">🔍&nbsp; Search for chats...</div>
     </div>
     """, unsafe_allow_html=True)
-    
+
     # Hero Banner
     st.markdown("""
     <div class="hero-banner">
@@ -272,59 +297,60 @@ with col_right:
         <div class="hero-sub">Search or ask AI for anything you want to know about Indonesia</div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Check API key
-    if not api_key:
-        st.warning("⚠️ API Key tidak ditemukan di file `.env`. Masukkan API Key Anda di bawah:")
-        api_key = st.text_input("Gemini API Key", type="password")
+
+    # ── Tampilan per menu ──
+    if st.session_state.active_menu == "Chats":
+        # Check API key
         if not api_key:
-            st.stop()
-    
-    model = get_model(api_key)
-    
-    # Messages Label
-    msg_count = len([m for m in st.session_state.messages if m["role"] == "user"])
-    st.markdown(f'<div class="chat-section-title">Chats ({msg_count})</div>', unsafe_allow_html=True)
-    
-    # Display Messages as Cards
-    for msg in st.session_state.messages:
-        is_user = msg["role"] == "user"
-        avatar = "👤" if is_user else "✨"
-        name = "You" if is_user else "Bima AI"
-        avatar_cls = "user" if is_user else ""
-        st.markdown(f"""
-        <div class="msg-card">
-            <div class="msg-avatar {avatar_cls}">{avatar}</div>
-            <div class="msg-body">
-                <div class="msg-header">
-                    <span class="msg-name">{name}</span>
+            st.warning("⚠️ API Key tidak ditemukan. Masukkan API Key Anda:")
+            api_key = st.text_input("Gemini API Key", type="password", key="api_input")
+            if not api_key:
+                st.stop()
+
+        model = get_model(api_key)
+
+        # Message count label
+        user_count = len([m for m in st.session_state.messages if m["role"] == "user"])
+        st.markdown(f'<div class="chat-section-title">Chats ({user_count})</div>', unsafe_allow_html=True)
+
+        # Render message cards
+        for msg in st.session_state.messages:
+            is_user = msg["role"] == "user"
+            avatar = "👤" if is_user else "✨"
+            name = "You" if is_user else "Bima AI"
+            avatar_cls = "user" if is_user else ""
+            # Render markdown-like bold in HTML
+            content = msg["content"].replace("**", "<b>", 1)
+            content = content.replace("**", "</b>", 1)
+            st.markdown(f"""
+            <div class="msg-card">
+                <div class="msg-avatar {avatar_cls}">{avatar}</div>
+                <div class="msg-body">
+                    <div class="msg-name">{name}</div>
+                    <div class="msg-text">{content}</div>
                 </div>
-                <div class="msg-text">{msg["content"]}</div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Chat Input
-    st.markdown('<div class="input-area">', unsafe_allow_html=True)
-    if prompt := st.chat_input("Tanya AI tentang wisata atau kuliner..."):
-        # Add user message
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        
-        # Generate response
-        gemini_history = []
-        for m in st.session_state.messages[:-1]:
-            role = "model" if m["role"] == "assistant" else "user"
-            gemini_history.append({"role": role, "parts": [m["content"]]})
-        
-        try:
-            chat = model.start_chat(history=gemini_history)
-            response = chat.send_message(prompt)
-            full_response = response.text
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-        except Exception as e:
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": f"❌ Terjadi kesalahan: {e}"
-            })
-        st.rerun()
+            """, unsafe_allow_html=True)
+
+        # Chat Input
+        if prompt := st.chat_input("Tanya AI tentang wisata atau kuliner..."):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            gemini_history = []
+            for m in st.session_state.messages[:-1]:
+                role = "model" if m["role"] == "assistant" else "user"
+                gemini_history.append({"role": role, "parts": [m["content"]]})
+            try:
+                chat = model.start_chat(history=gemini_history)
+                response = chat.send_message(prompt)
+                st.session_state.messages.append({"role": "assistant", "content": response.text})
+            except Exception as e:
+                st.session_state.messages.append({"role": "assistant", "content": f"❌ Kesalahan: {e}"})
+            st.rerun()
+
+    elif st.session_state.active_menu == "Library":
+        st.info("📚 **Library** — Tempat menyimpan rekomendasi dan artikel wisata favorit Anda. (Fitur segera hadir!)")
+
+    elif st.session_state.active_menu == "Apps":
+        st.info("🧩 **Apps** — Integrasi dengan aplikasi peta, booking, dan lainnya. (Fitur segera hadir!)")
+
     st.markdown('</div>', unsafe_allow_html=True)
