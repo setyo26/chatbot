@@ -6,88 +6,136 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Setup UI Configuration
+# Setup UI Configuration (Wide layout to mimic dashboard)
 st.set_page_config(
     page_title="Nusantara Guide AI",
-    page_icon="🏝️",
-    layout="centered",
+    page_icon="✨",
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for beautiful UI
+# Custom CSS to mimic the modern purple dashboard UI
 st.markdown("""
 <style>
-    /* Sembunyikan menu bawaan Streamlit agar lebih bersih */
+    /* Sembunyikan elemen bawaan */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Desain Header Utama */
-    .main-header {
-        font-size: 2.8rem;
-        font-weight: 800;
-        color: #2E7D32; /* Hijau Tropis */
-        text-align: center;
-        margin-bottom: 0px;
-        padding-top: 20px;
+    /* Background utama aplikasi putih bersih */
+    .stApp {
+        background-color: #F8F9FA;
     }
-    .sub-header {
-        font-size: 1.1rem;
-        color: #555;
+    
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #FFFFFF;
+        border-right: 1px solid #EAEAEA;
+    }
+    
+    /* Tombol-tombol di sidebar */
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px;
+        background-color: #8B5CF6;
+        color: white;
+        border: none;
+        padding: 10px;
+        font-weight: 600;
+    }
+    .stButton>button:hover {
+        background-color: #7C3AED;
+        color: white;
+    }
+    
+    /* Gradient Banner ala gambar referensi */
+    .hero-banner {
+        background: linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%);
+        padding: 40px 20px;
+        border-radius: 16px;
+        color: white;
         text-align: center;
-        margin-bottom: 2rem;
-        font-style: italic;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    .hero-banner h1 {
+        color: white;
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+    .hero-banner p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    /* Styling Chat Container */
+    .stChatMessage {
+        background-color: #FFFFFF;
+        border: 1px solid #F3F4F6;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Main Header
-st.markdown('<p class="main-header">🏝️ Nusantara Guide AI</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-header">Teman Pintar Jelajah Wisata & Kuliner Indonesia 🇮🇩</p>', unsafe_allow_html=True)
-st.divider()
 
-# Sidebar Beautification
+# Sidebar Menu (Mencoba meniru struktur sidebar referensi)
 with st.sidebar:
-    # Menambahkan gambar ilustrasi wisata di sidebar
-    st.image(
-        "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=600&auto=format&fit=crop", 
-        caption="Pesona Bali, Indonesia"
-    )
-    
-    st.markdown("### ⚙️ Pengaturan")
+    # Profil Tiru-tiruan
+    st.markdown("""
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background-color: #8B5CF6; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">US</div>
+            <div>
+                <div style="font-weight: bold; font-size: 1.1rem;">User Explorer</div>
+                <div style="font-size: 0.8rem; color: #666;">Free Plan</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     
     # Cek API Key
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         api_key = st.text_input("🔑 Masukkan Gemini API Key", type="password")
-        
+    
     st.markdown("---")
-    st.markdown("### 💡 Tentang Bima")
-    st.info(
-        "**Bima** adalah asisten AI yang dirancang khusus untuk memandu perjalanan wisata Anda "
-        "dan memberikan rekomendasi kuliner otentik terbaik di seluruh pelosok Nusantara."
-    )
-    st.caption("Ditenagai oleh Google Gemini ⚡")
+    
+    st.markdown("📂 **Menu**")
+    st.markdown("💬 Chats")
+    st.markdown("📚 Library")
+    st.markdown("🧩 Apps")
+    
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    if st.button("＋ New Chat"):
+        st.session_state.messages = []
+        st.rerun()
 
 # Stop jika tidak ada API key
 if not api_key:
     st.warning("⚠️ Masukkan API Key di sidebar sebelah kiri untuk mulai mengobrol.")
     st.stop()
 
-# Konfigurasi API
+# Banner Utama (Meniru Gradient Ungu/Biru)
+st.markdown("""
+    <div class="hero-banner">
+        <h1>Welcome to Nusantara Guide ✨</h1>
+        <p>Search or ask AI for anything you want to know about Indonesia</p>
+    </div>
+""", unsafe_allow_html=True)
+
+# Konfigurasi API & Model
 genai.configure(api_key=api_key)
 
-# Konfigurasi Parameter AI
 system_instruction = (
-    "Kamu adalah 'Bima', seorang asisten virtual spesialis pariwisata dan kuliner Indonesia. "
-    "Gaya bahasamu santai, asyik, dan ramah seperti teman sendiri (gunakan kata ganti 'aku' dan 'kamu'). "
-    "Kamu sangat berpengetahuan tentang destinasi wisata tersembunyi (hidden gems), "
-    "sejarah lokal, dan rekomendasi kuliner otentik di berbagai daerah di Indonesia. "
-    "Selalu berikan tips praktis atau rekomendasi tambahan di akhir jawabanmu."
+    "Kamu adalah AI Asisten pintar bernama Bima. "
+    "Tugas utamamu adalah memandu perjalanan wisata dan memberikan rekomendasi kuliner Indonesia. "
+    "Jawablah dengan gaya yang modern, profesional namun tetap ramah."
 )
 
 generation_config = {
-    "temperature": 0.75,
+    "temperature": 0.7,
     "top_p": 0.9,
     "top_k": 50,
     "max_output_tokens": 1024,
@@ -104,54 +152,50 @@ def get_model():
 model = get_model()
 
 # Inisialisasi Chat History
-if "messages" not in st.session_state:
+if "messages" not in st.session_state or len(st.session_state.messages) == 0:
     st.session_state.messages = []
-    
-    # Pesan pertama dari Bima
-    greeting = (
-        "Halo! Aku **Bima**, teman jalan-jalanmu di Indonesia. 🎒\n\n"
-        "Mau cari rekomendasi liburan kemana hari ini, atau lagi *ngidam* makanan khas daerah apa nih?"
-    )
-    st.session_state.messages.append({"role": "assistant", "content": greeting})
+    st.session_state.messages.append({
+        "role": "assistant", 
+        "content": "Halo! Saya siap membantu Anda merencanakan perjalanan atau mencari referensi kuliner di Indonesia. Ada yang ingin ditanyakan hari ini?"
+    })
 
-# Menampilkan riwayat chat
-for message in st.session_state.messages:
-    # Menggunakan Avatar kustom: User = 👤, Bima = 🌴
-    avatar = "👤" if message["role"] == "user" else "🌴"
-    with st.chat_message(message["role"], avatar=avatar):
-        st.markdown(message["content"])
+# Kontainer Chat di Tengah (Mirip desain feed)
+chat_container = st.container()
+
+with chat_container:
+    for message in st.session_state.messages:
+        # Avatar custom: Streva logo tiruan untuk asisten
+        avatar = "👤" if message["role"] == "user" else "✨"
+        with st.chat_message(message["role"], avatar=avatar):
+            st.markdown(message["content"])
 
 # Input Pengguna
-if prompt := st.chat_input("Tanya Bima soal wisata atau kuliner..."):
+if prompt := st.chat_input("Tanya AI tentang wisata atau kuliner..."):
     # Tampilkan input user
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user", avatar="👤"):
-        st.markdown(prompt)
+    with chat_container:
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(prompt)
 
-    # Proses respons AI
-    with st.chat_message("assistant", avatar="🌴"):
-        message_placeholder = st.empty()
-        
-        # Siapkan history untuk Gemini
-        gemini_history = []
-        for msg in st.session_state.messages[:-1]:
-            role = "model" if msg["role"] == "assistant" else "user"
-            gemini_history.append({"role": role, "parts": [msg["content"]]})
-        
-        try:
-            chat = model.start_chat(history=gemini_history)
-            response = chat.send_message(prompt, stream=True)
+        # Proses respons AI
+        with st.chat_message("assistant", avatar="✨"):
+            message_placeholder = st.empty()
             
-            full_response = ""
-            for chunk in response:
-                full_response += chunk.text
-                # Efek mengetik (streaming)
-                message_placeholder.markdown(full_response + "▌")
+            gemini_history = []
+            for msg in st.session_state.messages[:-1]:
+                role = "model" if msg["role"] == "assistant" else "user"
+                gemini_history.append({"role": role, "parts": [msg["content"]]})
             
-            # Tampilkan respons akhir penuh
-            message_placeholder.markdown(full_response)
-            
-            # Simpan ke memori
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-        except Exception as e:
-            st.error(f"Terjadi kesalahan saat menghubungi Bima: {e}")
+            try:
+                chat = model.start_chat(history=gemini_history)
+                response = chat.send_message(prompt, stream=True)
+                
+                full_response = ""
+                for chunk in response:
+                    full_response += chunk.text
+                    message_placeholder.markdown(full_response + "▌")
+                
+                message_placeholder.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            except Exception as e:
+                st.error(f"Terjadi kesalahan: {e}")
