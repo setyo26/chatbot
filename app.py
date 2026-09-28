@@ -60,7 +60,7 @@ st.markdown("""
 /* ── NAV BUTTONS in left col ── */
 [data-testid="stHorizontalBlock"] > div:first-child .stButton > button {
     background: transparent !important;
-    color: #555 !important;
+    color: #444 !important;
     border: none !important;
     border-radius: 8px !important;
     text-align: left !important;
@@ -72,6 +72,15 @@ st.markdown("""
     box-shadow: none !important;
     margin-bottom: 2px !important;
     transition: background .15s, color .15s;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+/* Target the <p> tag inside the button to ensure left align */
+[data-testid="stHorizontalBlock"] > div:first-child .stButton > button p {
+    text-align: left !important;
+    width: 100% !important;
+    margin: 0 !important;
 }
 [data-testid="stHorizontalBlock"] > div:first-child .stButton > button:hover {
     background: #F0EBFF !important;
@@ -95,6 +104,11 @@ st.markdown("""
     font-size: .9rem !important;
     box-shadow: 0 4px 14px rgba(139,92,246,.35) !important;
     justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+}
+.btn-primary .stButton > button p {
+    text-align: center !important;
     width: 100% !important;
 }
 .btn-primary .stButton > button:hover { opacity: .88 !important; color:white !important; }
